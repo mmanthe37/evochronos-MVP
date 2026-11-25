@@ -1,0 +1,14 @@
+[package]
+name = "evo-core"
+version = "0.1.0"
+edition = "2021"
+description = "Core physical invariants, PRNG, and data structures for EvoChronos"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+bytemuck = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

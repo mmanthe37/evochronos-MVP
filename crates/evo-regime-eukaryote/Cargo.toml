@@ -1,0 +1,17 @@
+[package]
+name = "evo-regime-eukaryote"
+version = "0.1.0"
+edition = "2021"
+description = "Regime IV: Eukaryogenesis, Chimeric Block Metabolism, CoRR-Constrained EGT, and Hill-Function GRNs"
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-regime-prokaryote = { path = "../evo-regime-prokaryote" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+nalgebra = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

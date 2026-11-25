@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package evochronos.v1;
+
+enum Regime {
+  REGIME_UNSPECIFIED = 0;
+  REGIME_I_PREBIOTIC = 1;
+  REGIME_II_PROTOCELL = 2;
+  REGIME_III_PROKARYOTE = 3;
+  REGIME_IV_EUKARYOTE = 4;
+  REGIME_V_MULTICELL = 5;
+  REGIME_VI_MACRO = 6;
+}
+
+message TimescaleConfig {
+  double micro_dt_seconds = 1;
+  double projective_macro_jump_seconds = 2;
+  uint32 micro_relaxation_burst_steps = 3;
+  double adaptive_error_tolerance = 4;
+}
+
+message ForkExperimentRequest {
+  string parent_experiment_id = 1;
+  uint64 fork_at_tick = 2;
+  string branch_label = 3;
+  EnvironmentalPerturbation perturbation = 4;
+}
+
+message EnvironmentalPerturbation {
+  optional double uv_flux_w_m2 = 1;
+  optional double temperature_delta_kelvin = 2;
+  optional double cosmic_ray_mutation_multiplier = 3;
+  map<string, double> chemical_bolus_mol_liter = 4;
+  optional double mass_extinction_lethality_fraction = 5;
+}
+
+message CompartmentQueryRequest {
+  string experiment_id = 1;
+  uint64 start_tick = 2;
+  uint64 end_tick = 3;
+  repeated Regime regimes = 4;
+  optional string clade_prefix = 5;
+  optional string metabolic_guild = 6;
+}
+
+service SimulationOrchestrator {
+  rpc SetTimescale(TimescaleConfig) returns (Ack);
+  rpc ForkCounterfactualBranch(ForkExperimentRequest) returns (BranchMetadata);
+  rpc QueryCompartments(CompartmentQueryRequest) returns (stream CompartmentTelemetryBatch);
+  rpc VerifyStoichiometricIntegrity(StoichiometryVerificationRequest) returns (StoichiometryVerificationResponse);
+}
+
+message Ack {
+  bool success = 1;
+  string status = 2;
+}
+
+message BranchMetadata {
+  string branch_id = 1;
+  string zarr_snapshot_uri = 2;
+}
+
+message CompartmentTelemetryBatch {
+  bytes arrow_ipc_payload = 1;
+}
+
+message StoichiometryVerificationRequest {
+  string experiment_id = 1;
+  uint64 at_tick = 2;
+}
+
+message StoichiometryVerificationResponse {
+  bool is_exact = 1;
+  uint64 carbon_drift = 2;
+  uint64 hydrogen_drift = 3;
+  uint64 oxygen_drift = 4;
+  uint64 nitrogen_drift = 5;
+  uint64 phosphorus_drift = 6;
+  uint64 sulfur_drift = 7;
+  uint64 iron_drift = 8;
+  string audit_status = 9;
+}

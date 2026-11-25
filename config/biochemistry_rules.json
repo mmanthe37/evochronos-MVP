@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "name": "Canonical Prebiotic Geochemical Reaction Templates",
+  "description": "Strictly mass-balanced elementary prebiotic reactions spanning formose sugars, Strecker amino acids, purines, pyrimidines, and lipid monomers.",
+  "species_catalog": [
+    { "name": "CH2O", "common_name": "Formaldehyde", "formula": [1, 2, 1, 0, 0, 0, 0], "gibbs_f_kj": -109.9, "is_food": true },
+    { "name": "HCN", "common_name": "Hydrogen Cyanide", "formula": [1, 1, 0, 1, 0, 0, 0], "gibbs_f_kj": 124.7, "is_food": true },
+    { "name": "NH3", "common_name": "Ammonia", "formula": [0, 3, 0, 1, 0, 0, 0], "gibbs_f_kj": -16.4, "is_food": true },
+    { "name": "H2O", "common_name": "Water", "formula": [0, 2, 1, 0, 0, 0, 0], "gibbs_f_kj": -237.13, "is_food": true },
+    { "name": "CO2", "common_name": "Carbon Dioxide", "formula": [1, 0, 2, 0, 0, 0, 0], "gibbs_f_kj": -394.36, "is_food": true },
+    { "name": "H2", "common_name": "Hydrogen Gas", "formula": [0, 2, 0, 0, 0, 0, 0], "gibbs_f_kj": 0.0, "is_food": true },
+    { "name": "H2S", "common_name": "Hydrogen Sulfide", "formula": [0, 2, 0, 0, 0, 1, 0], "gibbs_f_kj": -33.4, "is_food": true },
+    { "name": "HPO4_2m", "common_name": "Hydrogen Phosphate", "formula": [0, 1, 4, 0, 1, 0, 0], "gibbs_f_kj": -1096.1, "is_food": true },
+    { "name": "C2H4O2", "common_name": "Glycolaldehyde", "formula": [2, 4, 2, 0, 0, 0, 0], "gibbs_f_kj": -285.0, "is_food": false },
+    { "name": "C3H6O3", "common_name": "Glyceraldehyde", "formula": [3, 6, 3, 0, 0, 0, 0], "gibbs_f_kj": -448.0, "is_food": false },
+    { "name": "C5H10O5", "common_name": "Ribose", "formula": [5, 10, 5, 0, 0, 0, 0], "gibbs_f_kj": -755.0, "is_food": false },
+    { "name": "HCONH2", "common_name": "Formamide", "formula": [1, 3, 1, 1, 0, 0, 0], "gibbs_f_kj": -143.0, "is_food": false },
+    { "name": "C2H5NO2", "common_name": "Glycine", "formula": [2, 5, 2, 1, 0, 0, 0], "gibbs_f_kj": -370.0, "is_food": false },
+    { "name": "C3H7NO2", "common_name": "Alanine", "formula": [3, 7, 2, 1, 0, 0, 0], "gibbs_f_kj": -371.0, "is_food": false },
+    { "name": "C5H5N5", "common_name": "Adenine", "formula": [5, 5, 0, 5, 0, 0, 0], "gibbs_f_kj": 305.0, "is_food": false },
+    { "name": "C10H20O2", "common_name": "Decanoic Acid (Capric)", "formula": [10, 20, 2, 0, 0, 0, 0], "gibbs_f_kj": -480.0, "is_food": false }
+  ],
+  "reaction_templates": [
+    {
+      "name": "Formose_Dimerization",
+      "reactants": [{ "species": "CH2O", "coeff": 2 }],
+      "products": [{ "species": "C2H4O2", "coeff": 1 }],
+      "catalysts": [{ "species": "C2H4O2", "boost": 25.0 }],
+      "activation_energy_kj": 45.0
+    },
+    {
+      "name": "Formose_Aldol_Addition_Triose",
+      "reactants": [{ "species": "CH2O", "coeff": 1 }, { "species": "C2H4O2", "coeff": 1 }],
+      "products": [{ "species": "C3H6O3", "coeff": 1 }],
+      "catalysts": [{ "species": "C3H6O3", "boost": 15.0 }],
+      "activation_energy_kj": 40.0
+    },
+    {
+      "name": "Formose_Pentose_Assembly",
+      "reactants": [{ "species": "C2H4O2", "coeff": 1 }, { "species": "C3H6O3", "coeff": 1 }],
+      "products": [{ "species": "C5H10O5", "coeff": 1 }],
+      "catalysts": [],
+      "activation_energy_kj": 50.0
+    },
+    {
+      "name": "HCN_Hydration_Formamide",
+      "reactants": [{ "species": "HCN", "coeff": 1 }, { "species": "H2O", "coeff": 1 }],
+      "products": [{ "species": "HCONH2", "coeff": 1 }],
+      "catalysts": [],
+      "activation_energy_kj": 42.0
+    },
+    {
+      "name": "Adenine_Pentamerization",
+      "reactants": [{ "species": "HCN", "coeff": 5 }],
+      "products": [{ "species": "C5H5N5", "coeff": 1 }],
+      "catalysts": [{ "species": "C5H5N5", "boost": 50.0 }],
+      "activation_energy_kj": 65.0
+    },
+    {
+      "name": "Strecker_Glycine_Synthesis",
+      "reactants": [
+        { "species": "CH2O", "coeff": 1 },
+        { "species": "HCN", "coeff": 1 },
+        { "species": "NH3", "coeff": 1 },
+        { "species": "H2O", "coeff": 1 }
+      ],
+      "products": [{ "species": "C2H5NO2", "coeff": 1 }, { "species": "NH3", "coeff": 1 }],
+      "catalysts": [],
+      "activation_energy_kj": 55.0
+    }
+  ]
+}

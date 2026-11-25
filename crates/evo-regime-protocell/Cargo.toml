@@ -1,0 +1,16 @@
+[package]
+name = "evo-regime-protocell"
+version = "0.1.0"
+edition = "2021"
+description = "Regime II: Information Polymers, Quasispecies Dynamics, Vesicle Biophysics, and Chemoton Synchrony"
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-regime-prebiotic = { path = "../evo-regime-prebiotic" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

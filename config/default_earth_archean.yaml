@@ -1,0 +1,61 @@
+# default_earth_archean.yaml
+# Initial planetary boundary conditions for Archean Earth (3.8 - 4.0 Ga)
+
+planetary_environment:
+  epoch_name: "Eoarchean / Hadean Boundary"
+  time_before_present_gya: 3.9
+  surface_gravity_m_s2: 9.81
+  solar_luminosity_ratio: 0.75 # Faint Young Sun (~75% of modern luminosity)
+  day_length_hours: 14.0 # Faster Earth rotation in Hadean/Eoarchean
+
+atmosphere:
+  surface_pressure_bar: 1.5
+  mean_surface_temp_kelvin: 323.15 # ~50 °C
+  composition_volume_fraction:
+    N2: 0.78
+    CO2: 0.18 # High greenhouse CO2 preventing global glaciation
+    CH4: 0.02 # Biogenic/abiotic methane
+    H2: 0.015 # Reducing volcanic outgassing
+    CO: 0.003
+    H2S: 0.002
+    O2: 1.0e-12 # Pre-GOE anoxic atmosphere
+  uv_flux_w_m2: 45.0 # Elevated UV-C flux due to absence of stratospheric ozone
+
+ocean_and_hydrosphere:
+  mean_ocean_depth_meters: 3500.0
+  ocean_volume_liters: 1.35e21
+  ocean_ph: 6.0 # Mildly acidic due to dissolved carbonic acid
+  salinity_ppt: 40.0
+  dissolved_iron_ii_mmolar: 0.5 # High dissolved Fe2+ in anoxic Archaean seas
+  dissolved_phosphate_umolar: 1.2
+  dissolved_sulfate_umolar: 50.0 # Low sulfate compared to modern 28 mM
+
+hydrothermal_vent_systems:
+  system_type: "Alkaline Serpentinization Hydrothermal Vent (Lost City Analog)"
+  fluid_temp_kelvin: 343.15 # 70 °C
+  fluid_ph: 9.5 # Alkaline pore fluid rich in OH-
+  effluent_flux_liters_sec: 150.0
+  fluid_dissolved_species_mmolar:
+    H2: 15.0 # High dissolved H2 from serpentinization (olivine hydration)
+    CH4: 2.0
+    HS_minus: 1.5
+    Formate: 0.8
+    Acetate: 0.2
+  inorganic_precipitates:
+    - mineral: "Mackinawite (FeS)"
+      catalytic_factor: 8.5
+    - mineral: "Greigite (Fe3S4)"
+      catalytic_factor: 12.0
+    - mineral: "Millerite (NiS)"
+      catalytic_factor: 15.0
+    - mineral: "Magnetite (Fe3O4)"
+      catalytic_factor: 5.0
+    - mineral: "Green Rust (FeII-FeIII hydroxy-salt)"
+      catalytic_factor: 10.0
+
+simulation_defaults:
+  prng_seed: "0x8F14E45FCEEA167A"
+  initial_regime: "I_PrebioticGeochemistry"
+  tau_leaping_epsilon: 0.03
+  strict_stoichiometric_assert: true
+  raf_detection_interval_ticks: 1000

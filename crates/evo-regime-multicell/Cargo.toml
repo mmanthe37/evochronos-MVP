@@ -1,0 +1,19 @@
+[package]
+name = "evo-regime-multicell"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-regime-eukaryote = { path = "../evo-regime-eukaryote" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+rand = { workspace = true }
+rand_core = { workspace = true }
+nalgebra = { workspace = true }
+log = { workspace = true }
+
+[dev-dependencies]

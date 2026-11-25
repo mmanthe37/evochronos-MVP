@@ -1,0 +1,22 @@
+[package]
+name = "evo-bridge"
+version = "0.1.0"
+edition = "2021"
+description = "Coarse-Graining Bridge Operators (B_I/II->III, B_III->IV, B_IV->V, B_V->VI) and Projective Integration"
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-regime-prebiotic = { path = "../evo-regime-prebiotic" }
+evo-regime-protocell = { path = "../evo-regime-protocell" }
+evo-regime-prokaryote = { path = "../evo-regime-prokaryote" }
+evo-regime-eukaryote = { path = "../evo-regime-eukaryote" }
+evo-regime-multicell = { path = "../evo-regime-multicell" }
+evo-regime-macro = { path = "../evo-regime-macro" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+nalgebra = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

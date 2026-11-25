@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="60%" stop-color="#0b0f19"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </radialGradient>
+
+    <!-- Ring / Orbit Gradients -->
+    <linearGradient id="ringGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+
+    <linearGradient id="ringGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="50%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#f59e0b"/>
+    </linearGradient>
+
+    <linearGradient id="coreGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+
+    <!-- Filter for Soft Glow -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Base Rounded Squircle Background -->
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#bgGrad)" stroke="#1f2937" stroke-width="8"/>
+
+  <!-- Outer Kinetic Orbits (representing mass conservation / cycles) -->
+  <circle cx="512" cy="512" r="380" fill="none" stroke="#1f2937" stroke-width="3" stroke-dasharray="12 16"/>
+  <ellipse cx="512" cy="512" rx="360" ry="140" fill="none" stroke="url(#ringGrad1)" stroke-width="12" transform="rotate(-30 512 512)" opacity="0.85" filter="url(#glow)"/>
+  <ellipse cx="512" cy="512" rx="360" ry="140" fill="none" stroke="url(#ringGrad2)" stroke-width="12" transform="rotate(30 512 512)" opacity="0.85" filter="url(#glow)"/>
+
+  <!-- Seven Conserved Elemental Nodes [C, H, O, N, P, S, Fe] -->
+  <circle cx="512" cy="152" r="28" fill="#10b981" filter="url(#glow)"/> <!-- C -->
+  <circle cx="780" cy="270" r="24" fill="#38bdf8" filter="url(#glow)"/> <!-- H -->
+  <circle cx="830" cy="560" r="26" fill="#f43f5e" filter="url(#glow)"/> <!-- O -->
+  <circle cx="680" cy="810" r="25" fill="#a855f7" filter="url(#glow)"/> <!-- N -->
+  <circle cx="344" cy="810" r="22" fill="#eab308" filter="url(#glow)"/> <!-- P -->
+  <circle cx="194" cy="560" r="23" fill="#f97316" filter="url(#glow)"/> <!-- S -->
+  <circle cx="244" cy="270" r="27" fill="#64748b" filter="url(#glow)"/> <!-- Fe -->
+
+  <!-- Central Phylogenetic Tree & Autopoietic Nucleus -->
+  <g stroke="url(#coreGlow)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)">
+    <!-- Main Evolutionary Trunk -->
+    <path d="M 512,680 L 512,500"/>
+    <!-- Clade Branches -->
+    <path d="M 512,500 L 410,400 L 360,330"/>
+    <path d="M 410,400 L 460,330"/>
+    <path d="M 512,500 L 614,400 L 664,330"/>
+    <path d="M 614,400 L 564,330"/>
+  </g>
+
+  <!-- Central Seed -->
+  <circle cx="512" cy="500" r="20" fill="#ffffff" filter="url(#glow)"/>
+  <circle cx="360" cy="330" r="14" fill="#34d399"/>
+  <circle cx="460" cy="330" r="14" fill="#38bdf8"/>
+  <circle cx="564" cy="330" r="14" fill="#818cf8"/>
+  <circle cx="664" cy="330" r="14" fill="#c084fc"/>
+
+  <!-- Workstation Monogram / Baseline -->
+  <text x="512" y="860" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="54" font-weight="800" fill="#f9fafb" letter-spacing="12" text-anchor="middle">EVOCHRONOS</text>
+  <text x="512" y="905" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="600" fill="#9ca3af" letter-spacing="6" text-anchor="middle">SCIENTIFIC WORKSTATION</text>
+</svg>

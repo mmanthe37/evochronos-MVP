@@ -1,0 +1,24 @@
+[package]
+name = "evo-server"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-storage = { path = "../evo-storage" }
+evo-regime-prebiotic = { path = "../evo-regime-prebiotic" }
+evo-regime-protocell = { path = "../evo-regime-protocell" }
+evo-regime-prokaryote = { path = "../evo-regime-prokaryote" }
+evo-regime-eukaryote = { path = "../evo-regime-eukaryote" }
+evo-regime-multicell = { path = "../evo-regime-multicell" }
+evo-regime-macro = { path = "../evo-regime-macro" }
+evo-bridge = { path = "../evo-bridge" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+rand = { workspace = true }
+
+[dev-dependencies]

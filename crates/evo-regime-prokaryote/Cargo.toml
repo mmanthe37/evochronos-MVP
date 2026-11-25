@@ -1,0 +1,16 @@
+[package]
+name = "evo-regime-prokaryote"
+version = "0.1.0"
+edition = "2021"
+description = "Regime III: Prokaryotic Metabolism, Dynamic Flux Balance Analysis (dFBA), and Thermodynamic Loop Laws"
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+nalgebra = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

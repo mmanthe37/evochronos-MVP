@@ -1,0 +1,14 @@
+{
+  "name": "evochronos",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/workbench"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/workbench",
+    "build": "npm run build --workspace=apps/workbench",
+    "lint": "npm run lint --workspace=apps/workbench",
+    "preview": "npm run preview --workspace=apps/workbench"
+  }
+}

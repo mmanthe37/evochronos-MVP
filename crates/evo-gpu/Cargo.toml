@@ -1,0 +1,19 @@
+[package]
+name = "evo-gpu"
+version = "0.1.0"
+edition = "2021"
+description = "Pillar 1: Stoichiometrically Exact GPU Spatial Reaction-Diffusion Kernel in wgpu/WGSL"
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-regime-prebiotic = { path = "../evo-regime-prebiotic" }
+wgpu = { workspace = true }
+bytemuck = { workspace = true }
+pollster = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+
+[dev-dependencies]
+rand = { workspace = true }

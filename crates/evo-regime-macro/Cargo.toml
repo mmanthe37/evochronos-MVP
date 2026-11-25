@@ -1,0 +1,19 @@
+[package]
+name = "evo-regime-macro"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+evo-core = { path = "../evo-core" }
+evo-regime-multicell = { path = "../evo-regime-multicell" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+rand = { workspace = true }
+rand_core = { workspace = true }
+nalgebra = { workspace = true }
+log = { workspace = true }
+
+[dev-dependencies]
