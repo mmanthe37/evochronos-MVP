@@ -1,216 +1,334 @@
-import React, { useState, useEffect } from 'react';
-import { ConservationHud, ElementalBudget } from './components/ConservationHud';
-import { RegimeControls } from './components/RegimeControls';
-import { WebGpuSpatialCanvas } from './components/WebGpuSpatialCanvas';
-import { MetabolicFluxView } from './components/MetabolicFluxView';
-import { MorphospaceCanvas } from './components/MorphospaceCanvas';
-import { PhylogenyTreeCanvas } from './components/PhylogenyTreeCanvas';
-import { Layers, Activity, Compass, GitBranch } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { clonePools } from './engine/conservation';
+import { SCENARIO_PRESETS } from './engine/presets';
+import {
+  createInitialState,
+  injectAdversarialDrift,
+  stepSimulation,
+  stepSimulationBatch,
+} from './engine/simulation';
+import {
+  loadBundleFromLocalStorage,
+  ONBOARDING_KEY,
+  saveBundleToLocalStorage,
+  STORAGE_KEY,
+} from './engine/storage';
+import { ExperimentBranch, ScenarioParameters } from './engine/types';
+import { ActiveTab, GlobalHud } from './components/GlobalHud';
+import { WorkbenchView } from './components/WorkbenchView';
+import { ScenarioSetupView } from './components/ScenarioSetupView';
+import { CounterfactualDagView } from './components/CounterfactualDagView';
+import { EpistemicInspectorView } from './components/EpistemicInspectorView';
+import { ForkModal } from './components/ForkModal';
+import { WelcomeModal } from './components/WelcomeModal';
+
+function createControlBranch(presetId: string, params: ScenarioParameters): ExperimentBranch {
+  return {
+    id: `branch-${params.seed}-control`,
+    name: 'Control',
+    parentId: null,
+    forkTick: null,
+    perturbationSummary: 'Baseline scenario',
+    createdAt: new Date().toISOString(),
+    presetId,
+    parameters: { ...params },
+    state: createInitialState(params),
+  };
+}
+
+function shouldShowOnboardingInitially(): boolean {
+  if (typeof window === 'undefined') return false;
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('autostart') === '1') return false;
+  try {
+    return window.localStorage.getItem(ONBOARDING_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
 
 export const App: React.FC = () => {
-  const [activeRegime, setActiveRegime] = useState<number>(1);
-  const [activeView, setActiveView] = useState<'spatial' | 'metabolic' | 'morphospace' | 'tree'>('spatial');
-  const [isRunning, setIsRunning] = useState<boolean>(false);
-  const [currentEpoch, setCurrentEpoch] = useState<number>(0);
-  const [simulatedTimeSec, setSimulatedTimeSec] = useState<number>(0.0);
-
-  // Discrete 7-Element Mass Ledger State
-  const initialBudget: ElementalBudget = {
-    carbon: 100_000_000,
-    hydrogen: 200_000_000,
-    oxygen: 50_000_000,
-    nitrogen: 20_000_000,
-    phosphorus: 1_000_000,
-    sulfur: 500_000,
-    iron: 100_000,
-  };
-
-  const [livingBiomass, setLivingBiomass] = useState<ElementalBudget>({
-    carbon: 0,
-    hydrogen: 0,
-    oxygen: 0,
-    nitrogen: 0,
-    phosphorus: 0,
-    sulfur: 0,
-    iron: 0,
+  const [initialData] = useState(() => {
+    const saved = loadBundleFromLocalStorage();
+    if (saved && saved.branches.length > 0) {
+      return saved;
+    }
+    const defaultPreset = SCENARIO_PRESETS[0];
+    const control = createControlBranch(defaultPreset.id, defaultPreset.parameters);
+    return { branches: [control], activeBranchId: control.id };
   });
 
-  const [abioticReservoir, setAbioticReservoir] = useState<ElementalBudget>(initialBudget);
-  const [driftAtoms, setDriftAtoms] = useState<number>(0);
+  const [branches, setBranches] = useState<ExperimentBranch[]>(initialData.branches);
+  const [activeBranchId, setActiveBranchId] = useState<string>(initialData.activeBranchId);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('workbench');
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [magnification, setMagnification] = useState<number>(1);
+  const [forkModalOpen, setForkModalOpen] = useState<boolean>(false);
+  const [onboardingOpen, setOnboardingOpen] = useState<boolean>(() => shouldShowOnboardingInitially());
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
 
-  // Scientific parameters
-  const [growthRate] = useState<number>(0.85);
-  const [traitMean, setTraitMean] = useState<[number, number]>([0.5, 0.5]);
-  const [optimum] = useState<[number, number]>([2.5, 2.0]);
+  const activeBranch =
+    branches.find((b) => b.id === activeBranchId) ?? branches[0];
 
-  // Advance simulation by stepCount
-  const stepSimulation = (stepCount: number = 1) => {
-    setCurrentEpoch((prev) => prev + stepCount);
-    setSimulatedTimeSec((prev) => prev + stepCount * 0.1);
-
-    // Dynamic mass transfer respecting conservation:
-    const dCarbon = Math.min(2500 * stepCount, abioticReservoir.carbon);
-    if (dCarbon > 0) {
-      setLivingBiomass((prev) => ({
-        carbon: prev.carbon + dCarbon,
-        hydrogen: prev.hydrogen + dCarbon * 2,
-        oxygen: prev.oxygen + Math.floor(dCarbon * 0.5),
-        nitrogen: prev.nitrogen + Math.floor(dCarbon * 0.2),
-        phosphorus: prev.phosphorus + Math.floor(dCarbon * 0.01),
-        sulfur: prev.sulfur + Math.floor(dCarbon * 0.005),
-        iron: prev.iron + Math.floor(dCarbon * 0.0001),
-      }));
-
-      setAbioticReservoir((prev) => ({
-        carbon: prev.carbon - dCarbon,
-        hydrogen: prev.hydrogen - dCarbon * 2,
-        oxygen: prev.oxygen - Math.floor(dCarbon * 0.5),
-        nitrogen: prev.nitrogen - Math.floor(dCarbon * 0.2),
-        phosphorus: prev.phosphorus - Math.floor(dCarbon * 0.01),
-        sulfur: prev.sulfur - Math.floor(dCarbon * 0.005),
-        iron: prev.iron - Math.floor(dCarbon * 0.0001),
-      }));
+  // Auto-persist experiment DAG to LocalStorage
+  useEffect(() => {
+    const ok = saveBundleToLocalStorage(branches, activeBranch.id);
+    if (ok) {
+      setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     }
+  }, [branches, activeBranch.id]);
 
-    // Advance Lande trajectory if in Macro regime
-    if (activeRegime >= 5) {
-      setTraitMean(([z1, z2]) => [
-        z1 + (optimum[0] - z1) * 0.02 * stepCount,
-        z2 + (optimum[1] - z2) * 0.02 * stepCount,
-      ]);
+  // Stop playback automatically if an invariant violation occurs
+  useEffect(() => {
+    if (isRunning && activeBranch.state.invariantViolated) {
+      setIsRunning(false);
     }
+  }, [isRunning, activeBranch.state.invariantViolated]);
 
-    // Invariant check: Drift must remain 0
-    setDriftAtoms(0);
-  };
-
-  // Playback timer loop
+  // Deterministic playback interval
   useEffect(() => {
     if (!isRunning) return;
-    const interval = setInterval(() => {
-      stepSimulation(1);
-    }, 100);
-    return () => clearInterval(interval);
-  }, [isRunning, abioticReservoir]);
+    const timer = window.setInterval(() => {
+      setBranches((prev) =>
+        prev.map((b) =>
+          b.id === activeBranchId
+            ? { ...b, state: stepSimulation(b.state, b.parameters, magnification) }
+            : b
+        )
+      );
+    }, 180);
+    return () => window.clearInterval(timer);
+  }, [isRunning, activeBranchId, magnification]);
 
-  const handlePromoteBridge = () => {
-    if (activeRegime < 6) {
-      const nextRegime = activeRegime + 1;
-      setActiveRegime(nextRegime);
-      if (nextRegime === 3) setActiveView('metabolic');
-      if (nextRegime === 5) setActiveView('morphospace');
-      if (nextRegime === 6) setActiveView('tree');
+  const dismissOnboarding = (targetTab: ActiveTab) => {
+    setOnboardingOpen(false);
+    setActiveTab(targetTab);
+    try {
+      window.localStorage.setItem(ONBOARDING_KEY, '1');
+    } catch {
+      // Ignore storage quota errors
     }
   };
 
-  const handleReset = () => {
+  const handleStep = (steps: number) => {
+    setBranches((prev) =>
+      prev.map((b) =>
+        b.id === activeBranch.id
+          ? { ...b, state: stepSimulationBatch(b.state, b.parameters, steps, magnification) }
+          : b
+      )
+    );
+  };
+
+  const handleResetActiveBranch = () => {
     setIsRunning(false);
-    setCurrentEpoch(0);
-    setSimulatedTimeSec(0);
-    setActiveRegime(1);
-    setActiveView('spatial');
-    setLivingBiomass({ carbon: 0, hydrogen: 0, oxygen: 0, nitrogen: 0, phosphorus: 0, sulfur: 0, iron: 0 });
-    setAbioticReservoir(initialBudget);
-    setDriftAtoms(0);
-    setTraitMean([0.5, 0.5]);
+    setBranches((prev) =>
+      prev.map((b) =>
+        b.id === activeBranch.id
+          ? { ...b, state: createInitialState(b.parameters) }
+          : b
+      )
+    );
+  };
+
+  const handleToggleAutoPromote = () => {
+    setBranches((prev) =>
+      prev.map((b) =>
+        b.id === activeBranch.id
+          ? {
+              ...b,
+              parameters: {
+                ...b.parameters,
+                autoPromoteRegimes: !b.parameters.autoPromoteRegimes,
+              },
+            }
+          : b
+      )
+    );
+  };
+
+  const handleTriggerAdversarialDriftTest = () => {
+    setIsRunning(false);
+    setBranches((prev) =>
+      prev.map((b) =>
+        b.id === activeBranch.id
+          ? { ...b, state: injectAdversarialDrift(b.state) }
+          : b
+      )
+    );
+  };
+
+  const handleLaunchScenario = (
+    presetId: string,
+    params: ScenarioParameters,
+    recommendedMag: number,
+    autoRun: boolean
+  ) => {
+    setIsRunning(false);
+    const control = createControlBranch(presetId, params);
+    setBranches([control]);
+    setActiveBranchId(control.id);
+    setMagnification(recommendedMag);
+    setActiveTab('workbench');
+    if (autoRun) {
+      setIsRunning(true);
+    }
+  };
+
+  const handleConfirmFork = (
+    branchName: string,
+    perturbedParams: ScenarioParameters,
+    perturbationSummary: string
+  ) => {
+    setIsRunning(false);
+    const parent = activeBranch;
+    const forkId = `branch-${Date.now()}-${branches.length + 1}`;
+    const forkedState = {
+      ...parent.state,
+      pools: clonePools(parent.state.pools),
+      species: { ...parent.state.species },
+      traitMean: [...parent.state.traitMean] as [number, number],
+      traitOptimum: [...parent.state.traitOptimum] as [number, number],
+      history: parent.state.history.map((pt) => ({
+        ...pt,
+        traitMean: [...pt.traitMean] as [number, number],
+      })),
+      events: [
+        ...parent.state.events,
+        {
+          tick: parent.state.tick,
+          timeSec: parent.state.timeSec,
+          regime: parent.state.regime,
+          kind: 'fork' as const,
+          summary: `Forked from ${parent.name} at tick ${parent.state.tick}: ${perturbationSummary}`,
+        },
+      ],
+    };
+
+    const newBranch: ExperimentBranch = {
+      id: forkId,
+      name: branchName,
+      parentId: parent.id,
+      forkTick: parent.state.tick,
+      perturbationSummary,
+      createdAt: new Date().toISOString(),
+      presetId: parent.presetId,
+      parameters: { ...perturbedParams },
+      state: forkedState,
+    };
+
+    setBranches((prev) => [...prev, newBranch]);
+    setActiveBranchId(forkId);
+    setForkModalOpen(false);
+    setActiveTab('workbench');
+  };
+
+  const handleImportBundle = (restoredBranches: ExperimentBranch[], restoredActiveId: string) => {
+    setIsRunning(false);
+    setBranches(restoredBranches);
+    setActiveBranchId(restoredActiveId);
+  };
+
+  const handleClearSaved = () => {
+    setIsRunning(false);
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    const defaultPreset = SCENARIO_PRESETS[0];
+    const fresh = createControlBranch(defaultPreset.id, defaultPreset.parameters);
+    setBranches([fresh]);
+    setActiveBranchId(fresh.id);
+    setMagnification(1);
   };
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-[#090d16] text-slate-100 select-none overflow-hidden font-sans">
-      {/* Pillar 2: Global Atomic Conservation HUD */}
-      <ConservationHud
-        livingBiomass={livingBiomass}
-        abioticReservoir={abioticReservoir}
-        driftAtoms={driftAtoms}
-        activeRegime={activeRegime}
-        currentEpoch={currentEpoch}
-        simulatedTimeSec={simulatedTimeSec}
-      />
-
-      {/* Regime Navigation & Coarse-Graining Controls */}
-      <RegimeControls
-        activeRegime={activeRegime}
-        onSelectRegime={(r) => {
-          setActiveRegime(r);
-          if (r <= 2) setActiveView('spatial');
-          else if (r <= 4) setActiveView('metabolic');
-          else setActiveView('morphospace');
+    <div
+      className="flex flex-col h-dvh w-full bg-[#080B12] text-slate-100 font-sans overflow-hidden"
+      data-active-tab={activeTab}
+      data-active-regime={activeBranch.state.regime}
+      data-branch-count={branches.length}
+    >
+      <GlobalHud
+        activeTab={activeTab}
+        onSelectTab={(tab) => {
+          if (tab !== 'workbench') setIsRunning(false);
+          setActiveTab(tab);
         }}
-        onPromoteBridge={handlePromoteBridge}
-        isRunning={isRunning}
-        onTogglePlay={() => setIsRunning(!isRunning)}
-        onStep={stepSimulation}
-        onReset={handleReset}
+        activeBranch={activeBranch}
+        magnification={magnification}
+        onChangeMagnification={setMagnification}
+        onOpenForkModal={() => {
+          setIsRunning(false);
+          setForkModalOpen(true);
+        }}
+        onOpenOnboarding={() => setOnboardingOpen(true)}
+        onResetBranch={handleResetActiveBranch}
       />
 
-      {/* Main Viewport Workspace */}
-      <div className="flex-1 relative flex">
-        {/* Left Side View Selection Bar */}
-        <div className="w-14 bg-slate-950 border-r border-slate-800 flex flex-col items-center py-4 gap-4 z-20">
-          <button
-            onClick={() => setActiveView('spatial')}
-            className={`p-3 rounded-xl transition-all ${
-              activeView === 'spatial' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="3D WebGPU Reaction-Diffusion Lattice"
-          >
-            <Layers className="w-5 h-5" />
-          </button>
+      {activeTab === 'workbench' && (
+        <WorkbenchView
+          branch={activeBranch}
+          isRunning={isRunning}
+          magnification={magnification}
+          onToggleRun={() => setIsRunning((r) => !r)}
+          onStep={handleStep}
+          onReset={handleResetActiveBranch}
+          onOpenFork={() => {
+            setIsRunning(false);
+            setForkModalOpen(true);
+          }}
+          onToggleAutoPromote={handleToggleAutoPromote}
+          onTriggerAdversarialDriftTest={handleTriggerAdversarialDriftTest}
+        />
+      )}
 
-          <button
-            onClick={() => setActiveView('metabolic')}
-            className={`p-3 rounded-xl transition-all ${
-              activeView === 'metabolic' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="Block-Angular Metabolic Network (dFBA)"
-          >
-            <Activity className="w-5 h-5" />
-          </button>
+      {activeTab === 'setup' && (
+        <ScenarioSetupView
+          currentPresetId={activeBranch.presetId}
+          currentParameters={activeBranch.parameters}
+          onLaunchScenario={handleLaunchScenario}
+        />
+      )}
 
-          <button
-            onClick={() => setActiveView('morphospace')}
-            className={`p-3 rounded-xl transition-all ${
-              activeView === 'morphospace' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="Lande Phenotypic Morphospace"
-          >
-            <Compass className="w-5 h-5" />
-          </button>
+      {activeTab === 'dag' && (
+        <CounterfactualDagView
+          branches={branches}
+          activeBranchId={activeBranch.id}
+          onSelectBranch={(id) => {
+            setIsRunning(false);
+            setActiveBranchId(id);
+          }}
+          onOpenForkModal={() => {
+            setIsRunning(false);
+            setForkModalOpen(true);
+          }}
+          onImportBundle={handleImportBundle}
+          onClearSaved={handleClearSaved}
+          lastSavedAt={lastSavedAt}
+        />
+      )}
 
-          <button
-            onClick={() => setActiveView('tree')}
-            className={`p-3 rounded-xl transition-all ${
-              activeView === 'tree' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40' : 'text-slate-400 hover:text-slate-200'
-            }`}
-            title="tskit Succinct Tree Sequence Phylogeny"
-          >
-            <GitBranch className="w-5 h-5" />
-          </button>
-        </div>
+      {activeTab === 'epistemic' && (
+        <EpistemicInspectorView activeBranch={activeBranch} />
+      )}
 
-        {/* Viewport Display Area */}
-        <div className="flex-1 relative overflow-hidden">
-          {activeView === 'spatial' && (
-            <WebGpuSpatialCanvas
-              activeRegime={activeRegime}
-              simulatedTime={simulatedTimeSec}
-              biomassCarbon={livingBiomass.carbon}
-            />
-          )}
+      {forkModalOpen && (
+        <ForkModal
+          parentBranch={activeBranch}
+          nextBranchIndex={branches.length}
+          onClose={() => setForkModalOpen(false)}
+          onConfirmFork={handleConfirmFork}
+        />
+      )}
 
-          {activeView === 'metabolic' && (
-            <MetabolicFluxView growthRate={growthRate} />
-          )}
-
-          {activeView === 'morphospace' && (
-            <MorphospaceCanvas traitMean={traitMean} optimum={optimum} />
-          )}
-
-          {activeView === 'tree' && (
-            <PhylogenyTreeCanvas />
-          )}
-        </div>
-      </div>
+      {onboardingOpen && (
+        <WelcomeModal
+          onEnterWorkbench={() => dismissOnboarding('workbench')}
+          onExplorePresets={() => dismissOnboarding('setup')}
+        />
+      )}
     </div>
   );
 };

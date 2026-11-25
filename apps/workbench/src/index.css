@@ -4,20 +4,12 @@
 
 @layer base {
   body {
-    @apply bg-[#090d16] text-slate-100;
+    @apply bg-[#080B12] text-slate-100;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-}
 
-@keyframes spin-slow {
-  from {
-    transform: rotate(0deg);
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #1e293b #080b12;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin-slow {
-  animation: spin-slow 20s linear infinite;
 }
